@@ -14,7 +14,9 @@ import org.junit.jupiter.api.Test;
 class PedidoTest {
 
     private Pedido pedido;
-    private DescontoService descontoService;
+    private DescontoService descontoService;    
+    private DescontoService descontoService2;
+    private List<DescontoService> descontos;
     private List<ItemPedido> itens;
 
 
@@ -88,5 +90,58 @@ class PedidoTest {
         double valorTotalComDesconto = pedido.calcularValorTotal();
 
         assertEquals(0.0, valorTotalComDesconto);
+    }
+
+    @Test
+    void testDescontoPorItem() {
+        descontoService = mock(DescontoService.class);
+        when(descontoService.calcularDesconto(anyDouble())).thenReturn(90.0); //10% desconto
+
+        descontoService2 = mock(DescontoService.class);
+        when(descontoService2.calcularDesconto(anyDouble())).thenReturn(40.0); //20% desconto
+
+        descontos = new ArrayList<>();
+        descontos.add(descontoService);
+        descontos.add(descontoService2);
+
+        itens = new ArrayList<>();
+        itens.add(new ItemPedido("Item 1", 100.0, 1));
+        itens.add(new ItemPedido("Item 2", 50.0, 1));
+
+        pedido = new Pedido(itens, descontos);
+
+        double valorTotalComDesconto = pedido.calcularDescontoPorItem();
+
+        assertEquals(130.0, valorTotalComDesconto);
+    }
+
+    @Test
+    void testMetodoCalcularDescontoChamado1VezListaNaoVazia() {
+        descontoService = mock(DescontoService.class);
+        when(descontoService.calcularDesconto(anyDouble())).thenReturn(0.0);
+
+        itens = new ArrayList<>();
+        itens.add(new ItemPedido("Item 1", 100.0, 2));
+        itens.add(new ItemPedido("Item 2", 50.0, 3));
+
+        pedido = new Pedido(itens, descontoService);
+
+        double valorTotalComDesconto = pedido.calcularValorTotal();
+
+        assertEquals(1, pedido.getQuant());
+    }
+
+    @Test
+    void testMetodoCalcularDescontoChamado0VezesListaVazia() {
+        descontoService = mock(DescontoService.class);
+        when(descontoService.calcularDesconto(anyDouble())).thenReturn(0.0);
+
+        itens = new ArrayList<>();
+
+        pedido = new Pedido(itens, descontoService);
+
+        double valorTotalComDesconto = pedido.calcularValorTotal();
+
+        assertEquals(0, pedido.getQuant());
     }
 }
